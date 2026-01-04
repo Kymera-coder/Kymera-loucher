@@ -22,13 +22,13 @@ except ImportError as e:
 # ==========================================================
 # CONFIGURAÇÕES DE ATUALIZAÇÃO (EDITE AQUI)
 # ==========================================================
-VERSAO_ATUAL = "1.0.0"
+VERSAO_ATUAL = "1.0.1"
 
 # 1. Cole aqui o link RAW do seu arquivo versao.txt (Github Raw ou Pastebin Raw)
 LINK_VERSAO_TXT = "https://raw.githubusercontent.com/Kymera-coder/Kymera-loucher/refs/heads/main/version.txt"
 
 # 2. Cole aqui o site para onde o usuário vai se tiver update
-LINK_SITE_DOWNLOAD = "https://github.com/Kymera-coder/Kymera-loucher"
+LINK_SITE_DOWNLOAD = "https://github.com/Kymera-coder/Kymera-loucher/releases/tag/v1.0.1"
 # ==========================================================
 
 ctk.set_appearance_mode("Dark")
@@ -418,6 +418,7 @@ class KymeraApp(ctk.CTk):
 if __name__ == "__main__":
     app = KymeraApp()
     app.mainloop()
+
 
 
 
