@@ -25,7 +25,7 @@ except ImportError as e:
 VERSAO_ATUAL = "1.0.0"
 
 # 1. Cole aqui o link RAW do seu arquivo versao.txt (Github Raw ou Pastebin Raw)
-LINK_VERSAO_TXT = "https://raw.githubusercontent.com/Kymera-coder/Launcher-Kymera/refs/heads/main/version.txt"
+LINK_VERSAO_TXT = "https://raw.githubusercontent.com/Kymera-coder/Kymera-loucher/refs/heads/main/version.txt"
 
 # 2. Cole aqui o site para onde o usuário vai se tiver update
 LINK_SITE_DOWNLOAD = "https://github.com/Kymera-coder/Launcher-Kymera"
@@ -418,5 +418,6 @@ class KymeraApp(ctk.CTk):
 if __name__ == "__main__":
     app = KymeraApp()
     app.mainloop()
+
 
 
