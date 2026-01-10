@@ -27,7 +27,7 @@ except ImportError as e:
 # ==========================================================
 VERSAO_ATUAL = "1.0.2 (Otimizado)"
 LINK_VERSAO_TXT = "https://raw.githubusercontent.com/Kymera-coder/Kymera-loucher/refs/heads/main/version.txt"
-LINK_SITE_DOWNLOAD = "https://github.com/Kymera-coder/Kymera-loucher/releases/tag/v1.0.2"
+LINK_SITE_DOWNLOAD = "https://github.com/Kymera-coder/Kymera-loucher"
 
 ctk.set_appearance_mode("Dark")
 ctk.set_default_color_theme("dark-blue")
@@ -468,5 +468,6 @@ class KymeraApp(ctk.CTk):
 if __name__ == "__main__":
     app = KymeraApp()
     app.mainloop()
+
 
 
