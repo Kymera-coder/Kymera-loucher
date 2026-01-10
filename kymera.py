@@ -13,23 +13,21 @@ from io import BytesIO
 try:
     import customtkinter as ctk
     from tkinter import filedialog, messagebox
-    from PIL import Image, ImageFilter, ImageEnhance
+    from PIL import Image, ImageFilter
 except ImportError as e:
     import ctypes
-    ctypes.windll.user32.MessageBoxW(0, f"Faltam bibliotecas!\nErro: {e}", "ERRO", 0x10)
+    try:
+        ctypes.windll.user32.MessageBoxW(0, f"Faltam bibliotecas!\nErro: {e}\n\nInstale: pip install customtkinter pillow requests", "ERRO", 0x10)
+    except:
+        print(f"Faltam bibliotecas! Erro: {e}")
     sys.exit()
 
 # ==========================================================
-# CONFIGURAÇÕES DE ATUALIZAÇÃO (EDITE AQUI)
+# CONFIGURAÇÕES
 # ==========================================================
-VERSAO_ATUAL = "1.0.1"
-
-# 1. Cole aqui o link RAW do seu arquivo versao.txt (Github Raw ou Pastebin Raw)
+VERSAO_ATUAL = "1.0.1 (Otimizado)"
 LINK_VERSAO_TXT = "https://raw.githubusercontent.com/Kymera-coder/Kymera-loucher/refs/heads/main/version.txt"
-
-# 2. Cole aqui o site para onde o usuário vai se tiver update
-LINK_SITE_DOWNLOAD = "https://github.com/Kymera-coder/Kymera-loucher/releases/tag/1.0.1"
-# ==========================================================
+LINK_SITE_DOWNLOAD = "https://github.com/Kymera-coder/Kymera-loucher"
 
 ctk.set_appearance_mode("Dark")
 ctk.set_default_color_theme("dark-blue")
@@ -72,15 +70,13 @@ class JanelaSettings(ctk.CTkToplevel):
         h, m = int(tempo/3600), int((tempo%3600)/60)
         ctk.CTkLabel(f_stats, text=f"Jogos: {len(lista_jogos)} | Tempo: {h}h {m}m", font=("Arial", 12)).pack(pady=10)
 
-        # --- SEÇÃO: ATUALIZAÇÕES SIMPLES ---
+        # Update
         f_upd = ctk.CTkFrame(self, fg_color="#2b2b2b")
         f_upd.pack(pady=10, padx=20, fill="x")
         
         ctk.CTkLabel(f_upd, text=f"☁️ Versão Instalada: v{VERSAO_ATUAL}", font=("Arial", 12, "bold")).pack(pady=5)
-        
         self.lbl_status = ctk.CTkLabel(f_upd, text="Verificação Online", font=("Arial", 10), text_color="gray")
         self.lbl_status.pack(pady=0)
-
         self.btn_upd = ctk.CTkButton(f_upd, text="🔄 VERIFICAR AGORA", fg_color="#2980b9", command=self.verificar_update)
         self.btn_upd.pack(pady=10, padx=20, fill="x")
 
@@ -100,31 +96,20 @@ class JanelaSettings(ctk.CTkToplevel):
         
         def check_txt():
             try:
-                # Baixa o conteúdo do arquivo de texto
                 r = requests.get(LINK_VERSAO_TXT, headers=HEADERS, timeout=10)
-                
                 if r.status_code == 200:
-                    # Limpa espaços e quebras de linha para pegar só o número
                     versao_online = r.text.strip()
-                    
-                    # Compara as versões
                     if versao_online != VERSAO_ATUAL:
-                        self.lbl_status.configure(text=f"Nova versão detectada: {versao_online}!", text_color="green")
-                        msg = f"Nova versão disponível: {versao_online}\nSua versão: {VERSAO_ATUAL}\n\nDeseja baixar agora?"
-                        if messagebox.askyesno("Atualização", msg):
+                        self.lbl_status.configure(text=f"Nova versão: {versao_online}!", text_color="green")
+                        if messagebox.askyesno("Atualização", "Nova versão disponível. Baixar agora?"):
                             webbrowser.open(LINK_SITE_DOWNLOAD)
                     else:
                         self.lbl_status.configure(text="Você já tem a versão mais recente.", text_color="gray")
                         messagebox.showinfo("Atualizado", "Nenhuma atualização disponível.")
                 else:
                     self.lbl_status.configure(text="Erro ao ler arquivo.", text_color="red")
-                    messagebox.showerror("Erro", "Não foi possível ler o arquivo de versão.\nVerifique se o Link RAW está correto.")
-
-            except Exception as e:
+            except:
                 self.lbl_status.configure(text="Erro de conexão.", text_color="red")
-                print(e)
-            
-            # Reativa o botão
             self.btn_upd.configure(text="🔄 VERIFICAR AGORA", state="normal")
 
         threading.Thread(target=check_txt, daemon=True).start()
@@ -161,9 +146,11 @@ class JanelaCapas(ctk.CTkToplevel):
     def save(self, img):
         try:
             import random
+            # MELHORIA: Reduz a imagem antes de salvar para economizar espaço e RAM
+            img.thumbnail((300, 450)) 
             n = f"{''.join(c for c in self.nome_jogo if c.isalnum())[:15]}_{random.randint(100,999)}.jpg"
             c = os.path.join(PASTA_CAPAS, n)
-            img.convert("RGB").save(c, "JPEG")
+            img.convert("RGB").save(c, "JPEG", quality=85)
             self.callback(c); self.destroy()
         except: pass
 
@@ -179,13 +166,16 @@ class JanelaConfig(ctk.CTkToplevel):
         ctk.CTkButton(self, text="SALVAR", fg_color="green", command=lambda: [callback(jogo, self.e.get()), self.destroy()]).pack(pady=20)
 
 # ==========================================================
-# APP PRINCIPAL (KYMERA V33 - COM ABAS)
+# APP PRINCIPAL (KYMERA ORIGINAL OTIMIZADO)
 # ==========================================================
 class KymeraApp(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("Kymera Launcher")
         self.geometry("1100x750")
+        
+        # OTIMIZAÇÃO: Cache de imagens
+        self.cache_imagens = {} 
         self.lista_jogos = []
         self.lista_links = [] # Lista para os sites
         
@@ -210,25 +200,31 @@ class KymeraApp(ctk.CTk):
         ctk.CTkButton(self.top, text="💬 Discord", width=90, fg_color="#5865F2", command=lambda: webbrowser.open(LINK_DISCORD)).pack(side="right", padx=(10,20))
         ctk.CTkButton(self.top, text="⚙️", width=40, fg_color="#333", command=self.settings).pack(side="right", padx=5)
 
-        # --- SISTEMA DE ABAS (O NOVO CORAÇÃO) ---
+        # SISTEMA DE ABAS
         self.abas = ctk.CTkTabview(self, width=1000, height=600, fg_color="transparent")
         self.abas.pack(fill="both", expand=True, padx=10, pady=10)
         
-        # Cria as abas
         self.aba_lib = self.abas.add("BIBLIOTECA")
         self.aba_down = self.abas.add("DOWNLOADS")
 
         # --- ABA BIBLIOTECA ---
-        # Botões de controle da biblioteca
         f_ctrl = ctk.CTkFrame(self.aba_lib, fg_color="transparent")
         f_ctrl.pack(fill="x", pady=5)
         ctk.CTkButton(f_ctrl, text="➕ Add Manual", width=100, fg_color="#333", command=self.add_manual).pack(side="right", padx=5)
-        ctk.CTkButton(f_ctrl, text="🔍 Scan", width=80, fg_color="#5865F2", command=self.scan).pack(side="right", padx=5)
+        
+        # OTIMIZAÇÃO: Botão Scan com status
+        self.btn_scan = ctk.CTkButton(f_ctrl, text="🔍 Scan", width=80, fg_color="#5865F2", command=self.iniciar_scan)
+        self.btn_scan.pack(side="right", padx=5)
+        self.lbl_scan_status = ctk.CTkLabel(f_ctrl, text="", text_color="yellow")
+        self.lbl_scan_status.pack(side="right", padx=10)
 
         # Scroll da Biblioteca
         self.scroll_lib = ctk.CTkScrollableFrame(self.aba_lib, fg_color="transparent")
         self.scroll_lib.pack(fill="both", expand=True)
         self.scroll_lib.grid_columnconfigure((0,1,2,3), weight=1)
+        
+        # OTIMIZAÇÃO: TURBO SCROLL
+        self.scroll_lib._parent_canvas.bind_all("<MouseWheel>", self._turbo_scroll, add="+")
 
         # --- ABA DOWNLOADS ---
         f_ctrl_d = ctk.CTkFrame(self.aba_down, fg_color="transparent")
@@ -236,33 +232,41 @@ class KymeraApp(ctk.CTk):
         ctk.CTkLabel(f_ctrl_d, text="CENTRAL DE SITES", font=("Arial", 16, "bold")).pack(side="left", padx=10)
         ctk.CTkButton(f_ctrl_d, text="➕ Novo Site", width=100, fg_color="green", command=self.add_site).pack(side="right", padx=5)
 
-        # Scroll de Downloads
         self.scroll_down = ctk.CTkScrollableFrame(self.aba_down, fg_color="transparent")
         self.scroll_down.pack(fill="both", expand=True)
-        self.scroll_down.grid_columnconfigure((0,1,2), weight=1) # 3 colunas de sites
+        self.scroll_down.grid_columnconfigure((0,1,2), weight=1)
+        self.scroll_down._parent_canvas.bind_all("<MouseWheel>", self._turbo_scroll, add="+")
 
         # INICIALIZAÇÃO
         self.carregar_dados()
-        self.carregar_links() # Carrega os sites
+        self.carregar_links() 
 
-    # --- FUNÇÕES DOWNLOADS (NOVO) ---
+    # OTIMIZAÇÃO: Lógica do Turbo Scroll (Mais rápido e suave)
+    def _turbo_scroll(self, event):
+        try:
+            velocidade = -1 * (event.delta // 30)
+            if self.aba_lib.winfo_ismapped():
+                self.scroll_lib._parent_canvas.yview_scroll(velocidade, "units")
+            elif self.aba_down.winfo_ismapped():
+                self.scroll_down._parent_canvas.yview_scroll(velocidade, "units")
+            return "break"
+        except: pass
+
+    # --- FUNÇÕES DOWNLOADS ---
     def carregar_links(self):
         if os.path.exists(ARQUIVO_LINKS):
             try:
                 with open(ARQUIVO_LINKS, 'r') as f: self.lista_links = json.load(f)
             except: pass
         
-        # Se estiver vazio, adiciona alguns padrões
         if not self.lista_links:
             self.lista_links = [
                 {"nome": "Steam", "url": "https://store.steampowered.com"},
                 {"nome": "Epic Games", "url": "https://store.epicgames.com"},
-                {"nome": "GOG", "url": "https://www.gog.com"},
                 {"nome": "FitGirl (Repacks)", "url": "https://fitgirl-repacks.site"},
                 {"nome": "Dodi (Repacks)", "url": "https://dodi-repacks.site"}
             ]
             self.salvar_links()
-        
         self.desenhar_links()
 
     def salvar_links(self):
@@ -289,22 +293,15 @@ class KymeraApp(ctk.CTk):
         colunas = 3
         for i, site in enumerate(self.lista_links):
             r, c = i // colunas, i % colunas
-            
             card = ctk.CTkFrame(self.scroll_down, fg_color="#181818", border_color="#333", border_width=2)
             card.grid(row=r, column=c, padx=10, pady=10, sticky="nsew")
-            
-            # Nome Grande
             ctk.CTkLabel(card, text=site["nome"], font=("Arial", 16, "bold"), text_color="white").pack(pady=15)
-            
-            # Botão Acessar
             ctk.CTkButton(card, text="ACESSAR 🔗", fg_color="#5865F2", 
                           command=lambda u=site["url"]: webbrowser.open(u)).pack(pady=5, padx=20, fill="x")
-            
-            # Botão Remover
             ctk.CTkButton(card, text="Remover", fg_color="transparent", text_color="red", height=20,
                           command=lambda s=site: self.remover_site(s)).pack(pady=5)
 
-    # --- FUNÇÕES GERAIS (Mantidas) ---
+    # --- FUNÇÕES GERAIS ---
     def carregar_configs_gerais(self):
         if os.path.exists(ARQUIVO_CONFIGS):
             try: 
@@ -315,12 +312,19 @@ class KymeraApp(ctk.CTk):
         with open(ARQUIVO_CONFIGS, 'w') as f: json.dump(self.configs_gerais, f)
         if self.configs_gerais["bg_path"]: self.aplicar_fundo(self.configs_gerais["bg_path"])
     def settings(self): JanelaSettings(self, self.configs_gerais, self.lista_jogos, self.salvar_configs_gerais)
+    
     def aplicar_fundo(self, c):
-        try:
-            if os.path.exists(c):
-                img = ctk.CTkImage(Image.open(c).filter(ImageFilter.GaussianBlur(15)).point(lambda p: p * 0.5), size=(1920, 1080))
-                self.bg_lbl.configure(image=img); self.bg_lbl.image = img
-        except: pass
+        # OTIMIZAÇÃO: Thread para carregar fundo pesado
+        def t():
+            try:
+                if os.path.exists(c):
+                    pil = Image.open(c).filter(ImageFilter.GaussianBlur(15)).point(lambda p: p * 0.5)
+                    pil.thumbnail((1920, 1080))
+                    img = ctk.CTkImage(pil, size=(1920, 1080))
+                    self.after(0, lambda: self.bg_lbl.configure(image=img))
+            except: pass
+        threading.Thread(target=t, daemon=True).start()
+
     def carregar_dados(self):
         if os.path.exists(ARQUIVO_DADOS):
             try:
@@ -330,20 +334,41 @@ class KymeraApp(ctk.CTk):
     def salvar_dados(self): 
         with open(ARQUIVO_DADOS, 'w') as f: json.dump(self.lista_jogos, f)
     
-    # --- VISUAL BIBLIOTECA ---
+    # --- VISUAL BIBLIOTECA (OTIMIZADO) ---
     def desenhar_lib(self, lista):
         for w in self.scroll_lib.winfo_children(): w.destroy()
         lista.sort(key=lambda x: x.get("favorito", False), reverse=True)
-        for i, j in enumerate(lista): self.card_lib(j, i//4, i%4)
+        
+        # OTIMIZAÇÃO: Carregamento progressivo (Não trava ao abrir)
+        batch_size = 16
+        def render_batch(start_idx):
+            end_idx = min(start_idx + batch_size, len(lista))
+            for i in range(start_idx, end_idx):
+                self.card_lib(lista[i], i//4, i%4)
+            if end_idx < len(lista):
+                self.after(20, lambda: render_batch(end_idx))
+        render_batch(0)
+
+    # OTIMIZAÇÃO: Cache de imagem na RAM
+    def get_cached_image(self, path):
+        if not path or not os.path.exists(path): return None
+        if path in self.cache_imagens: return self.cache_imagens[path]
+        try:
+            pil = Image.open(path)
+            pil.thumbnail((160, 220)) # Pequeno na RAM
+            img = ctk.CTkImage(pil, size=(160, 220))
+            self.cache_imagens[path] = img
+            return img
+        except: return None
 
     def card_lib(self, j, r, c):
         color = "#FFD700" if j.get("favorito") else "#333"
         card = ctk.CTkFrame(self.scroll_lib, fg_color="#181818", border_color=color, border_width=2 if j.get("favorito") else 0)
         card.grid(row=r, column=c, padx=5, pady=5, sticky="nsew")
         
-        if j.get("imagem") and os.path.exists(j["imagem"]):
-            try: ctk.CTkLabel(card, text="", image=ctk.CTkImage(Image.open(j["imagem"]), size=(160,220))).pack(pady=5)
-            except: self.vazio(card)
+        # Usa o Cache
+        img = self.get_cached_image(j.get("imagem"))
+        if img: ctk.CTkLabel(card, text="", image=img).pack(pady=5)
         else: self.vazio(card)
 
         ctk.CTkButton(card, text="★" if j.get("favorito") else "☆", width=25, fg_color="transparent", text_color=color, font=("Arial", 22), command=lambda: self.fav(j)).place(relx=0.9, rely=0.01, anchor="ne")
@@ -358,7 +383,15 @@ class KymeraApp(ctk.CTk):
         
         fo = ctk.CTkFrame(card, fg_color="transparent")
         fo.pack(pady=5)
-        ctk.CTkButton(fo, text="🎨", width=30, fg_color="#333", command=lambda: JanelaCapas(self, j["nome"], lambda c: [j.update({"imagem":c}), self.salvar_dados(), self.desenhar_lib(self.lista_jogos)])).pack(side="left", padx=2)
+        
+        def update_capa(c):
+            # Limpa cache antigo
+            if j.get("imagem") in self.cache_imagens: del self.cache_imagens[j.get("imagem")]
+            j.update({"imagem":c})
+            self.salvar_dados()
+            self.desenhar_lib(self.lista_jogos)
+
+        ctk.CTkButton(fo, text="🎨", width=30, fg_color="#333", command=lambda: JanelaCapas(self, j["nome"], update_capa)).pack(side="left", padx=2)
         ctk.CTkButton(fo, text="⚙️", width=30, fg_color="#333", command=lambda: JanelaConfig(self, j, lambda o, a: [o.update({"args":a}), self.salvar_dados()])).pack(side="left", padx=2)
         ctk.CTkButton(fo, text="🗑️", width=30, fg_color="#900", command=lambda: self.rem(j)).pack(side="left", padx=2)
 
@@ -375,6 +408,7 @@ class KymeraApp(ctk.CTk):
         if messagebox.askyesno("Confirmar", "Apagar?"): self.lista_jogos.remove(j); self.salvar_dados(); self.desenhar_lib(self.lista_jogos)
     
     def play(self, j):
+        # OTIMIZAÇÃO: Thread para não travar ao lançar
         def t():
             cmd = [j["caminho"]] + (shlex.split(j["args"]) if j.get("args") else [])
             start = time.time()
@@ -389,9 +423,16 @@ class KymeraApp(ctk.CTk):
                 if foco: self.deiconify()
         threading.Thread(target=t, daemon=True).start()
 
-    def scan(self):
+    # OTIMIZAÇÃO: Thread no Scan
+    def iniciar_scan(self):
         d = filedialog.askdirectory()
         if not d: return
+        self.btn_scan.configure(state="disabled")
+        self.lbl_scan_status.configure(text="Escaneando...", text_color="yellow")
+        threading.Thread(target=self.scan_thread, args=(d,), daemon=True).start()
+
+    def scan_thread(self, d):
+        novos = 0
         for item in os.scandir(d):
             if item.is_dir():
                 exe, maior = None, 0
@@ -407,7 +448,16 @@ class KymeraApp(ctk.CTk):
                     if exe: break
                 if exe and not any(j['caminho'] == exe for j in self.lista_jogos):
                     self.lista_jogos.append({"nome": item.name, "caminho": exe, "imagem":"", "favorito":False, "tempo_jogado":0, "args":""})
-        self.salvar_dados(); self.desenhar_lib(self.lista_jogos)
+                    novos += 1
+        
+        self.after(0, lambda: self.finalizar_scan(novos))
+
+    def finalizar_scan(self, novos):
+        self.salvar_dados()
+        self.desenhar_lib(self.lista_jogos)
+        self.lbl_scan_status.configure(text=f"{novos} novos!", text_color="green")
+        self.btn_scan.configure(state="normal")
+        self.after(5000, lambda: self.lbl_scan_status.configure(text=""))
 
     def add_manual(self):
         a = filedialog.askopenfilename(filetypes=[("EXE", "*.exe")])
@@ -418,9 +468,3 @@ class KymeraApp(ctk.CTk):
 if __name__ == "__main__":
     app = KymeraApp()
     app.mainloop()
-
-
-
-
-
-
